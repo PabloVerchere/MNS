@@ -3,7 +3,16 @@ import time
 
 import fct
 import data
+import os
 
+# Ask for the complete name of the image
+image_name = input("Please enter the complete name of the image: ")
+
+# Extract the file name and extension
+data.file_name, data.extension = os.path.splitext(image_name)
+
+# Update the full name and absolute path
+fct.update_full_name()
 
 
 # Start time
@@ -11,6 +20,7 @@ start_time = time.time()
 
 # Original image loading
 img = Image.open(data.absolute_path)
+
 print('Image ' + data.file_name + ' loaded')
 print()
 
@@ -22,7 +32,7 @@ img_rank = fct.svd(img, data.rank)
 # Save the compressed images
 print('Saving compressed images...')
 for i in range(len(data.rank)):
-    img_rank[i].save(data.full_name_rank[i])
+    img_rank[i].save(data.full_name_rank[i]) 
     print('   ' +  data.file_name + '_rank_' + str(data.rank[i]) + data.extension)
 print()
 
