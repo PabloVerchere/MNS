@@ -80,7 +80,7 @@ def update_full_name():
     data.absolute_path = os.path.abspath(data.src_img + data.full_name)
 
 
-def clean_reduced_file():
+def clean_file(png = False):
     print("Cleaning compressed images...")
 
     img_dir = os.path.join("img")
@@ -88,6 +88,10 @@ def clean_reduced_file():
     for filename in os.listdir(img_dir):
         if filename.endswith("_rank_reduced"):
             shutil.rmtree(os.path.join(img_dir, filename)) # Remove the directory and its content
+        
+        if png:
+            if filename.endswith("_compressed_images.png"):
+                os.remove(os.path.join(img_dir, filename)) # Remove the file
 
 
 def saveIMG(img_rank):
@@ -136,7 +140,7 @@ def displayIMG(img):
     rows = int(math.ceil(n / cols))
 
     # Set up the subplot grid
-    _, axes = plt.subplots(rows, cols)
+    fig, axes = plt.subplots(rows, cols)
 
     # Flatten the axes array for easy iteration
     axes = axes.flatten()
@@ -150,6 +154,10 @@ def displayIMG(img):
     # Hide any remaining axes if n is not a perfect square
     for j in range(n, len(axes)):
         axes[j].axis("off")
+
+
+    plt.suptitle(data.file_name)
+    plt.savefig("img/" + data.file_name + "_compressed_images.png")
 
     plt.tight_layout()
     plt.show()

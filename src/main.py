@@ -16,7 +16,7 @@ data.file_name, data.extension = os.path.splitext(image_name)
 fct.update_full_name()
 
 # Clean the img folder
-fct.clean_reduced_file()
+fct.clean_file(1)
 
 
 # Start time
