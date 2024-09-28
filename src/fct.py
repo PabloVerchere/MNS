@@ -11,17 +11,17 @@ import data
 
 "Decomposes the matrix M using Singular Value Decomposition (SVD)"
 def decompose_matrix(M):
-  U, S, V = np.linalg.svd(M) # Perform SVD
-  S = np.diag(S)  # Convert S (a vector) into a diagonal matrix
+    U, S, V = np.linalg.svd(M) # Perform SVD
+    S = np.diag(S)  # Convert S (a vector) into a diagonal matrix
 
-  return U, S, V
+    return U, S, V
 
 
 "Reconstructs the matrix using the SVD components with rank r"
 def reconstruct_matrix(U, S, V, r):
-  R = U[:, :r] @ S[:r, :r] @ V[:r, :]  # Use rank-reduced components for approximation
+    M = U[:, :r] @ S[:r, :r] @ V[:r, :]  # Use rank-reduced components for approximation
 
-  return R
+    return M
 
 
 "SVD compression"
