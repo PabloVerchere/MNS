@@ -1,5 +1,6 @@
 # Rank reduction
-rank = [5, 10, 25, 50, 100]
+rank = [5, 10, 25, 50, 100, 1000]
+rank.sort()
 
 # Absolute path to the image
 file_name = None

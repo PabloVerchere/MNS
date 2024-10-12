@@ -6,13 +6,14 @@ import data
 import os
 
 
+
 # Ask for the complete name of the image
 image_name = input("Please enter the complete name of the image: ")
 
 # Extract the file name and extension
 data.file_name, data.extension = os.path.splitext(image_name)
 
-# Update the full name and absolute path
+# Update the full name and absolute path according to ranks that will be used
 fct.update_full_name()
 
 # Clean the img folder
@@ -25,10 +26,11 @@ start_time = time.time()
 # Original image loading
 img = Image.open(data.absolute_path)
 print("Image " + data.file_name + " loaded")
+fct.verify_rank(img)
 print()
 
 # SVD compression
-img_rank = fct.svd(img, data.rank)
+img_rank, S = fct.svd(img, data.rank)
 
 # Save the compressed images
 fct.saveIMG(img_rank)
@@ -41,7 +43,14 @@ print("=" * 25)
 print("Elapsed time: " + str(round(end_time - start_time, 2)) + " seconds")
 print("=" * 25)
 
-fct.sizeIMG()
+fct.sizeIMG() # Display the size of the images
 
 img_rank.append(img) # Insert the original image at the end of the list
-fct.displayIMG(img_rank)
+fct.displayIMG(img, img_rank)
+
+for i in range(len(S)):
+    S[i] = S[i].diagonal() # Extract the diagonal of the singular values
+fct.displayEnergy(S) # Display the energy of the singular values
+
+
+input("Press any key to destroy the plots") # to keep the plot open

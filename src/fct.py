@@ -12,7 +12,7 @@ import data
 "Decomposes the matrix M using Singular Value Decomposition (SVD)"
 def decompose_matrix(M):
     U, S, V = np.linalg.svd(M) # Perform SVD
-    S = np.diag(S)  # Convert S (a vector) into a diagonal matrix
+    S = np.diag(S)  # Convert S (a vector) into a diagonal matrix of dim m x m    
 
     return U, S, V
 
@@ -55,7 +55,7 @@ def svd(img, rank):
         img_rank.append(Image.merge("RGB", (R_rank, G_rank, B_rank)))
         
     print()
-    return img_rank
+    return img_rank, [Sr, Sg, Sb]
 
 
 "Returns the size of the image in a human-readable format"
@@ -90,7 +90,7 @@ def clean_file(png = False):
             shutil.rmtree(os.path.join(img_dir, filename)) # Remove the directory and its content
         
         if png:
-            if filename.endswith("_compressed_images.png"):
+            if filename.endswith("_compressed_images.png") or filename.endswith("_energy.png"):
                 os.remove(os.path.join(img_dir, filename)) # Remove the file
 
 
@@ -122,25 +122,26 @@ def sizeIMG():
     print("=" * 25)
 
     n = len(data.rank)
-    for i in range(len(data.rank)):
+    for i in range(n):
         print("Rank " + str(data.rank[(n -1) -i]) + " reduced size " + size_formating(size_rank[(n -1) -i]))
         print("Compression ratio " + str(round(size_original / size_rank[(n -1) -i], 2)))
         print("-" * 25)
+    print()
 
 
-"Shows the images with matplotlib"
-def displayIMG(img):
+"Shows the images rank reduced"
+def displayIMG(original, img):
     n = len(img)  # Number of images to plot
 
     rank_ = data.rank.copy()
-    rank_.append(0) # Insert the original image rank at the end of the list
+    rank_.append(min(original.size)) # Insert the original image rank at the end of the list
 
     # Calculate the number of rows and columns for a square layout
     cols = int(math.ceil(math.sqrt(n)))
     rows = int(math.ceil(n / cols))
 
     # Set up the subplot grid
-    fig, axes = plt.subplots(rows, cols)
+    _, axes = plt.subplots(rows, cols)
 
     # Flatten the axes array for easy iteration
     axes = axes.flatten()
@@ -160,4 +161,76 @@ def displayIMG(img):
     plt.savefig("img/" + data.file_name + "_compressed_images.png")
 
     plt.tight_layout()
-    plt.show()
+    plt.show(block = False)
+
+
+"Verify if the rank is inf to the image size"
+def verify_rank(img):
+    width, height = img.size
+    min_dim = min(width, height)
+
+    nb = 0
+    for r in data.rank:
+        if r < min_dim:
+            nb += 1
+    
+    data.rank = data.rank[:nb] # Update the rank list with the valid ranks
+    data.full_name_rank = data.full_name_rank[:nb] # Update the full name rank list with the valid ranks
+
+
+def computeEnergy(singular_values):
+    return np.cumsum(singular_values) / np.sum(singular_values)  # Compute the cumulative sum of the singular values
+
+
+"Display the energy depending on the singular values"
+def displayEnergy(singular_values_RGB):
+    # Compute the cumulative energy for each channel
+    color = [computeEnergy(singular_values_RGB[0]), computeEnergy(singular_values_RGB[1]), computeEnergy(singular_values_RGB[2])]
+
+    # Compute the mean energy
+    mean = np.mean(color, axis=0)
+
+    x = np.arange(1, len(mean) + 1)  # Create an array of the same length as the singular values
+
+
+    # Show the energy for rank reduction
+    print("Energy (mean)")
+    print("=" * 25)
+
+    n = len(data.rank)
+    for i in range(n):
+        print("Rank " + str(data.rank[(n -1) -i]) + " energy conserved " + str(round(mean[data.rank[(n -1) -i]], 2)))
+        print("-" * 25)
+    print()
+
+    
+    # Create subplots
+    _, axs = plt.subplots(2, 2)
+
+
+    # Plot each channel
+    title = ["Red", "Green", "Blue", "Mean"]
+    color.append(mean)
+    for i in range(len(color)):
+        axs.flat[i].plot(x, color[i], marker='o', linestyle = 'None', color='rgbk'[i])
+
+        axs.flat[i].set_title("Energy of " + title[i] + " Channel")
+        axs.flat[i].set_xlabel("Number of singular values")
+        axs.flat[i].set_ylabel("Energy")
+
+        x_lim = axs.flat[i].get_xlim()
+        y_lim = axs.flat[i].get_ylim()
+
+        for r in data.rank:
+            # Minmax normalization to get the position of the line depending on the limits of the plot (on xmax and ymax)
+            axs.flat[i].axvline(x = r, ymax = ((color[i][r] - y_lim[0]) / (y_lim[1] - y_lim[0])), color = 'k', linestyle = '--', alpha = 0.4)
+            axs.flat[i].axhline(y = color[i][r], xmax = ((r - x_lim[0]) / (x_lim[1] - x_lim[0])), color = 'k', linestyle = '--', alpha = 0.4)
+
+        axs.flat[i].grid()
+
+    plt.suptitle(data.file_name)
+    plt.savefig("img/" + data.file_name + "_energy.png")
+
+    # Adjust layout to prevent overlap
+    plt.tight_layout()
+    plt.show(block = False)
