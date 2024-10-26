@@ -48,9 +48,7 @@ fct.sizeIMG() # Display the size of the images
 img_rank.append(img) # Insert the original image at the end of the list
 fct.displayIMG(img, img_rank)
 
-for i in range(len(S)):
-    S[i] = S[i].diagonal() # Extract the diagonal of the singular values
-fct.displayEnergy(S) # Display the energy of the singular values
+fct.displayEnergy(S[0].diagonal()) # Display the energy of the singular values
 
 
 input("Press any key to destroy the plots") # to keep the plot open

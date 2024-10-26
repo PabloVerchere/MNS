@@ -183,51 +183,53 @@ def computeEnergy(singular_values):
 
 
 "Display the energy depending on the singular values"
-def displayEnergy(singular_values_RGB):
+def displayEnergy(singular_values):
     # Compute the cumulative energy for each channel
-    color = [computeEnergy(singular_values_RGB[0]), computeEnergy(singular_values_RGB[1]), computeEnergy(singular_values_RGB[2])]
+    energy = computeEnergy(singular_values)
 
-    # Compute the mean energy
-    mean = np.mean(color, axis=0)
-
-    x = np.arange(1, len(mean) + 1)  # Create an array of the same length as the singular values
-
+    x = np.arange(1, len(energy) + 1)  # Create an array of the same length as the singular values
 
     # Show the energy for rank reduction
-    print("Energy (mean)")
+    print("Energy (singular values)")
     print("=" * 25)
 
     n = len(data.rank)
     for i in range(n):
-        print("Rank " + str(data.rank[(n -1) -i]) + " energy conserved " + str(round(mean[data.rank[(n -1) -i]], 2)))
+        print("Rank " + str(data.rank[(n -1) -i]) + " energy conserved " + str(round(energy[data.rank[(n -1) -i]], 2)))
         print("-" * 25)
     print()
-
     
     # Create subplots
-    _, axs = plt.subplots(2, 2)
+    _, axs = plt.subplots(1, 2)
 
 
-    # Plot each channel
-    title = ["Red", "Green", "Blue", "Mean"]
-    color.append(mean)
-    for i in range(len(color)):
-        axs.flat[i].plot(x, color[i], marker='o', linestyle = 'None', color='rgbk'[i])
+    axs.flat[0].plot(x, singular_values, marker='o', linestyle = 'None', color='r')
+    axs.flat[0].set_xlabel("Number of singular values")
+    axs.flat[0].set_ylabel("Singular values")
+    axs.flat[0].set_yscale('log') # put the y axis in log scale
 
-        axs.flat[i].set_title("Energy of " + title[i] + " Channel")
-        axs.flat[i].set_xlabel("Number of singular values")
-        axs.flat[i].set_ylabel("Energy")
+    x_lim = axs.flat[0].get_xlim()
+    y_lim = axs.flat[0].get_ylim()
 
-        x_lim = axs.flat[i].get_xlim()
-        y_lim = axs.flat[i].get_ylim()
+    for r in data.rank:
+        # Minmax normalization to get the position of the line depending on the limits of the plot (on xmax and ymax)
+        axs.flat[0].axvline(x = r, ymax = ((math.log(singular_values[r]) - math.log(y_lim[0])) / (math.log(y_lim[1]) - math.log(y_lim[0]))), color = 'k', linestyle = '--', alpha = 0.4)
+        axs.flat[0].axhline(y = singular_values[r], xmax = ((r - x_lim[0]) / (x_lim[1] - x_lim[0])), color = 'k', linestyle = '--', alpha = 0.4)
 
-        for r in data.rank:
-            # Minmax normalization to get the position of the line depending on the limits of the plot (on xmax and ymax)
-            axs.flat[i].axvline(x = r, ymax = ((color[i][r] - y_lim[0]) / (y_lim[1] - y_lim[0])), color = 'k', linestyle = '--', alpha = 0.4)
-            axs.flat[i].axhline(y = color[i][r], xmax = ((r - x_lim[0]) / (x_lim[1] - x_lim[0])), color = 'k', linestyle = '--', alpha = 0.4)
 
-        axs.flat[i].grid()
+    axs.flat[1].plot(x, energy, marker='o', linestyle = 'None')
+    axs.flat[1].set_xlabel("Number of singular values")
+    axs.flat[1].set_ylabel("Energy")
 
+    x_lim = axs.flat[1].get_xlim()
+    y_lim = axs.flat[1].get_ylim()
+
+    for r in data.rank:
+        # Minmax normalization to get the position of the line depending on the limits of the plot (on xmax and ymax)
+        axs.flat[1].axvline(x = r, ymax = ((energy[r] - y_lim[0]) / (y_lim[1] - y_lim[0])), color = 'k', linestyle = '--', alpha = 0.4)
+        axs.flat[1].axhline(y = energy[r], xmax = ((r - x_lim[0]) / (x_lim[1] - x_lim[0])), color = 'k', linestyle = '--', alpha = 0.4)
+
+    
     plt.suptitle(data.file_name)
     plt.savefig("img/" + data.file_name + "_energy.png")
 
