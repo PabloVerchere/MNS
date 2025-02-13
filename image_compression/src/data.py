@@ -1,5 +1,5 @@
 # Rank reduction
-rank = [5, 10, 25, 50, 100, 1000]
+rank = [5, 10, 25, 50, 100]
 rank.sort()
 
 # Absolute path to the image
