@@ -172,6 +172,7 @@ for k in range(1,n1 +1):
     u_exact_sol[:, k] = u(x , k * dt)
 
     U[:, k] = RK4(U[:, k-1], A, B, x, k-1)
+
     # Rectification des poitns fantÃƒÂ´mes
     U[0, k] = -U[2 * fantome, k]
     U[1, k] = -U[2 * fantome -1, k]
@@ -196,7 +197,6 @@ Wr = W[:, :r].copy()
 A2 = sp.csc_matrix(Wr.T @ A @ Wr)
 B2 = sp.csc_matrix(Wr.T @ B @ Wr)
 
-#Uapr = Wr.T @ Uapr
 
 
 
@@ -206,6 +206,7 @@ for k in range(n1 +1, N -1):
 
     U[:, k ] = RK4(U[:, k-1], A, B, x, k-1)
     Uapr[:, k ] = RK4_2(Uapr[:, k-1], A2, B2, x, k-1)
+    
     # Rectification des poitns fantÃƒÂ´mes
     U[0, k] = -U[2 * fantome, k]
     U[1, k] = -U[2 * fantome -1, k]

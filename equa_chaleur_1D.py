@@ -44,7 +44,7 @@ for i in range(I+1):
    U[i,0]=u(i*h,0)
    x[i]=i*h
 
-
+# Init A matrix
 A = sp.lil_matrix((I+1, I+1))
 
 A[0,0]=1
@@ -56,6 +56,8 @@ for i in range(1,I):
 
 A = A.tocsc()
 
+
+# Init b vector
 b=np.zeros(I+1)
 
 for i in range(1,I):
@@ -63,6 +65,7 @@ for i in range(1,I):
 b[0]=alpha(0)
 b[I]=beta(0)
 
+# Resolution
 for k in range(1,n1+1):
     b=b+U[:,k-1]
     b[0]=alpha((k+1)*Dt)
@@ -94,6 +97,8 @@ A2 = sp.csc_matrix(Wr.T @ A @ Wr)
 
 bapr=b.copy()
 b2=bapr.copy()
+
+# Resolution avec la décomposition
 for k in range(n1+1,N+1):
     # ajout des u d'indice k et des termes de bords pour le calcul en k+1
     b=b+U[:,k-1]
@@ -115,14 +120,6 @@ for k in range(n1+1,N+1):
     for i in range(1,I):
         b[i]=Dt*f(x[i],(k+1)*Dt)
         bapr[i]=Dt*f(x[i],(k+1)*Dt)
-
-
-print("A ", A.shape)
-print("b ", b.shape)
-print("U ", U[:, k].shape)
-print("A2 ", A2.shape)
-print("bapr ", bapr.shape)
-print("Uapr ", Uapr[:, k].shape)
 
 
 

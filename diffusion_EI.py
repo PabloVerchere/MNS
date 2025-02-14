@@ -1,4 +1,3 @@
-
 # Importation des bibliothÃ¨ques
 import numpy as np
 #from scipy import sparse as sp
@@ -12,7 +11,7 @@ n1 = 100 # Nombre de pas de temps avant la dÃ©composition
 r = 10 # Rang de la dÃ©composition
 T = 1 # Temps final
 dt = T /N # Pas de temps
-ghost = 2
+fantome = 2
 
 I = 69 # Nombre de points de l'espace
 E = 1.0 # Longueur de l'espace
@@ -129,9 +128,6 @@ U[:, 1] = spsolve(-B, A @ F)
 
 
 
-
-
-fantome = ghost
 def rectification(U, dt, x):
     U = U + alpha(dt) - U[fantome] + (beta(dt) - U[-fantome -1] - (alpha(dt) - U[fantome])) * x
     return U
@@ -147,19 +143,13 @@ u_exact_sol = u(x, dt)
 print("erreur:", np.linalg.norm(U[:, 1] - u_exact_sol, np.inf))
 
 # rectification en 0 et E
-rect_0 = U[ghost, 1] + ((U[-ghost -1, 1] - U[ghost, 1])) * x
+rect_0 = U[fantome, 1] + ((U[-fantome -1, 1] - U[fantome, 1])) * x
 rect_val = alpha(dt) + ((beta(dt) - alpha(dt))) * x
 
-#print("rect_0:", rect_0)
-#print("rect_val:", rect_val)
 
 Ubis = U[:,1] - rect_0 + rect_val
 
 Uter = rectification(U[:, 1], dt, x)
-
-#Ubis = Usec+alpha(0)-Usec[2]+(beta(0)-Usec[-3]-(alpha(0)-Usec[2]))*x 
-
-#Ubis = U[:, 1]-U[2, 1]-(U[-3, 1]-U[2, 1])*x
 
 print("erreurbis:", np.linalg.norm(Ubis - u_exact_sol, np.inf))
 print("erreurter:", np.linalg.norm(Uter - u_exact_sol, np.inf))
