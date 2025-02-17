@@ -1,155 +1,129 @@
-# Importation des bibliothÃ¨ques
+# Importation des bibliothèques
 import numpy as np
-#from scipy import sparse as sp
+from numpy import linalg as la
 import scipy.sparse as sp
 from scipy.sparse.linalg import spsolve
-import matplotlib.pyplot  as plt
 
-# ParamÃ¨tres
-N = 10 # Nombre de pas de temps
-n1 = 100 # Nombre de pas de temps avant la dÃ©composition
-r = 10 # Rang de la dÃ©composition
-T = 1 # Temps final
-dt = T /N # Pas de temps
-fantome = 2
+# Paramètres
+N = 1000 # Nombre de pas de temps
+n1 = 100 # Nombre de pas de temps pour la décomposition
+r = 10 # Rang de la décomposition
+T = 2.0 # Temps final
+Dt = T /N # Pas de temps
 
-I = 69 # Nombre de points de l'espace
+I = 100 # Nombre de points de l'espace
 E = 1.0 # Longueur de l'espace
-h = E /(I-5) # Pas d'espace
+h = E /I # Pas d'espace
 
-Kappa = 1.0 # Coefficient de diffusion
-# lambda_ = dt /(h **2)
+K = 1.0 # Coefficient de diffusion
+lambda_ = Dt /(h **2)
 
 
 # Fonctions
 def u(x, t):
-    return np.sin(np.pi * x)
+    return np.cos(np.pi * x * t)
 
 def u0(x):
     return u(x, 0)
 
-def f(x, t):
-    return (np.pi **2) * np.sin(np.pi * x)
-
+def f(x, t): # f(x, t) = (du / dt) - (K * d2u / dx2)
+    return -((np.pi * x) * (np.sin(np.pi * x * t))) + (K * ((np.pi * t) **2) * np.cos(np.pi * x * t))
+    
 def alpha(t):
     return u(0, t)
 
 def beta(t):
     return u(E, t)
 
-def R(A, B, U):
-    return sp.linalg.spsolve(A, B @ U)
 
+U=np.zeros((I+1,N+1))
 
-# Initialisation de la matrice A
-A = sp.lil_matrix((I, I))
+x=np.zeros(I+1)
 
-A[0, 0] = 1
-A[0, 1] = 126 /11
+for i in range(I+1):
+   U[i,0]=u(i*h,0)
+   x[i]=i*h
 
-A[1, 0] = 11 /128
-A[1, 1] = 1
-A[1, 2] = 11 /128
+# Init A matrix
+A = sp.lil_matrix((I+1, I+1))
 
-A[I -2, I -3] = 11 /128
-A[I -2, I -2] = 1
-A[I -2, I -1] = 11 /128
-
-A[I -1, I -1] = 1
-A[I -1, I -2] = 126 /11
-
-
-for i in range(2, I -2):
-    A[i, i] = 1
-
-    A[i, i +1] = 2 /11
-    A[i, i -1] = 2 /11
+A[0,0]=1
+A[I,I]=1
+for i in range(1,I):
+    A[i,i]=1+2*lambda_
+    A[i,i+1]=-lambda_
+    A[i,i-1]=-lambda_
 
 A = A.tocsc()
 
 
-# Initialisation de la matrice B
-B = sp.lil_matrix((I, I))
+# Init b vector
+b=np.zeros(I+1)
 
-B[0, 0] = 2077 /157
-B[0, 1] = - 2943 /110
-B[0, 2] = 574 /44
-B[0, 3] = 167 /99
-B[0, 4] = - 18 /11
-B[0, 5] = 57 /110
-B[0, 6] = - 131 /1980
+for i in range(1,I):
+    b[i]=Dt*f(x[i],0)
+b[0]=alpha(0)
+b[I]=beta(0)
 
-B[1, 0] = 585 /512
-B[1, 1] = - 141 /64
-B[1, 2] = 459 /512
-B[1, 3] = 9 /32
-B[1, 4] = - 81 /512
-B[1, 5] = 3 /64
-B[1, 6] = - 3 /512
+# Resolution
+for k in range(1,n1+1):
+    b=b+U[:,k-1]
+    b[0]=alpha((k+1)*Dt)
+    b[I]=beta((k+1)*Dt)
 
-B[I -1, I -1] = 2077 /157
-B[I -1, I -2] = - 2943 /110
-B[I -1, I -3] = 574 /44
-B[I -1, I -4] = 167 /99
-B[I -1, I -5] = - 18 /11
-B[I -1, I -6] = 57 /110
-B[I -1, I -7] = - 131 /1980
+    U[:,k]=spsolve(A,b)
+    for i in range(1,I):
+        b[i]=Dt*f(x[i],(k+1)*Dt)
 
-B[I -2, I -1] = 585 /512
-B[I -2, I -2] = - 141 /64
-B[I -2, I -3] = 459 /512
-B[I -2, I -4] = 9 /32
-B[I -2, I -5] = - 81 /512
-B[I -2, I -6] = 3 /64
-B[I -2, I -7] = - 3 /512
+Uapr=U.copy()
 
 
-for i in range(2, I -2):
-    B[i, i] = - 51 /22
+def decompose_matrix(M):
+    '''Decomposes the matrix M using Singular Value Decomposition (SVD).'''
+    U, S, V = np.linalg.svd(M)  # Perform SVD
 
-    B[i, i +1] = 12 /11
-    B[i, i -1] = 12 /11
+  # Adjust matrix shapes to ensure U (m x n), S (n x n), V (n x n):
+    U = U[:, :S.shape[0]]  # Limit U to the number of singular values
+    S = np.diag(S)  # Convert S (a vector) into a diagonal matrix
 
-    B[i, i +2] = 3 /44
-    B[i, i -2] = 3 /44
-
-
-B = B /(Kappa * (h **2))
-
-
-x = np.linspace(0-2*h, E+2*h, I)
-U = np.zeros((I, N))
-U[:, 0] = u0(x)
-
-F = f(x, 0)
-
-# -B @ U = A @ F
-U[:, 1] = spsolve(-B, A @ F)
+    return U, S, V
 
 
 
-def rectification(U, dt, x):
-    U = U + alpha(dt) - U[fantome] + (beta(dt) - U[-fantome -1] - (alpha(dt) - U[fantome])) * x
-    return U
+W,D,V=decompose_matrix(U)
+Wr=W[:,:r].copy()
+
+A2 = sp.csc_matrix(Wr.T @ A @ Wr)
+
+bapr=b.copy()
+b2=bapr.copy()
+
+# Resolution avec la décomposition
+for k in range(n1+1,N+1):
+    # ajout des u d'indice k et des termes de bords pour le calcul en k+1
+    b=b+U[:,k-1]
+    b[0]=alpha((k+1)*Dt)
+    b[I]=beta((k+1)*Dt)
+
+    bapr=bapr+Uapr[:,k-1]
+    bapr[0]=alpha((k+1)*Dt)
+    bapr[I]=beta((k+1)*Dt)
+    
+    # resolution pour U avec Euler Implicite classique
+    U[:,k]=spsolve(A,b)
+
+    # resolution avec l'approximation de rang r
+    b2=Wr.T @ bapr
+    Uapr[:,k]=Wr @ spsolve(A2, b2)
+
+    # debut de la construction des 2 seconds membres
+    for i in range(1,I):
+        b[i]=Dt*f(x[i],(k+1)*Dt)
+        bapr[i]=Dt*f(x[i],(k+1)*Dt)
 
 
 
-
-
-u_exact_sol = np.zeros((I, N))
-u_exact_sol = u(x, dt)
-
-
-print("erreur:", np.linalg.norm(U[:, 1] - u_exact_sol, np.inf))
-
-# rectification en 0 et E
-rect_0 = U[fantome, 1] + ((U[-fantome -1, 1] - U[fantome, 1])) * x
-rect_val = alpha(dt) + ((beta(dt) - alpha(dt))) * x
-
-
-Ubis = U[:,1] - rect_0 + rect_val
-
-Uter = rectification(U[:, 1], dt, x)
-
-print("erreurbis:", np.linalg.norm(Ubis - u_exact_sol, np.inf))
-print("erreurter:", np.linalg.norm(Uter - u_exact_sol, np.inf))
+#3 erreurs entre u(vraie valeur), U et Uapr
+print("Erreur entre res calssique et val réelle :",la.norm(np.abs(U[:,-1]-u(x,T))))
+print("Erreur entre res approchée et val réelle :",la.norm(np.abs(Uapr[:,-1]-u(x,T))))
+print("Erreur entre res calssique et approchée :",la.norm(np.abs(Uapr[:,-1]-U[:,-1])))
